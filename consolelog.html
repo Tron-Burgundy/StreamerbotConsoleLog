@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Console Logger for Streamerbot</title>
+    <script>
+        "use strict"
+        // IMPORTANT: Make the same as the custom socket server port in Streamerbot. Default 8082
+        const STREAMERBOT_SOCKET_PORT = 8082;
+        const SOCK_ADDR = "ws://localhost:" + STREAMERBOT_SOCKET_PORT;
+        let sock = new WebSocket(SOCK_ADDR);
+
+        sock.onmessage  = sock_msg_handler;
+        sock.onopen     = e => { console.log("Websocket connected.", e, sock); msg("Socket connected."); }
+        sock.onerror    = e => console.log("ERROR: Websocket error.", e, sock);
+        sock.onclose    = e => {cclog("SOCKET CLOSED.", "y", true); msg("Socket has closed.  Refresh the page to attempt reconnect.", "has-text-danger")}
+
+        // document.title = "Console Log SIMPLIFIED (js)";
+        // window.clog = console.log;
+            // coloured console log
+        function cclog(message, col = "w", bold = false) {
+            const cols = { r: 1, g: 2, b: 4, w: 7, c: 6, m: 5, y: 3, k: 0 };
+            const code = cols[col] ?? 7; // default white
+            if (bold) message = "\x1b[1m" + message;
+            console.log(`\x1b[3${code}m%s\x1b[0m`, message);    // non-bold
+        }
+            // socket messages can trigger these via json or be straght dumped
+        const actions = {
+            consoleclear: d => console.clear(),
+            consolelog: d => cclog( d.message, d.colour, d.bold ?? false ),
+            dump: d => console.log(d.data)
+        }
+
+        let sockMsgCounter = 0;
+
+        function sock_msg_handler(d) {
+            window.d = d.data; // for debugging
+            d = d.data;
+            let data = null, action, json = "not json";
+
+            sockMsgCounter++;
+            set_counter(sockMsgCounter);
+                // is it a json?
+            if (d[0] === '{') {
+                try {
+                    json = JSON.parse(d);
+                    action = json.action;
+
+                    if (actions[action]) {
+                        actions[action](json);
+                        return;
+                    }
+                } catch (error) {
+                    clog("Error: message_handler:", d);
+                }
+            }
+
+            console.log(d);
+        }
+
+            // simple display
+        function msg(msg, classes = "") {
+            const msgDiv = document.getElementById("messages");
+            const mD = document.createElement("div");
+
+            mD.textContent = msg;
+
+            if (classes) {
+                mD.className = classes;
+            }
+
+            msgDiv.append(mD);
+        }
+
+        function set_counter(msg) {
+            document.getElementById("msgcount").textContent = msg;
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div class="block mx-5 my-3">
+
+      <div class="title is-1 mb-1">Press F12 for SB socket messages.</div>
+      <div>Messages: <span id="msgcount">0</span></div>
+      <div id="messages" class="title is-4"></div>
+    </div>
+  </body>
+</html>
