@@ -15,8 +15,6 @@
         sock.onerror    = e => console.log("ERROR: Websocket error.", e, sock);
         sock.onclose    = e => {cclog("SOCKET CLOSED.", "y", true); msg("Socket has closed.  Refresh the page to attempt reconnect.", "has-text-danger")}
 
-        // document.title = "Console Log SIMPLIFIED (js)";
-        // window.clog = console.log;
             // coloured console log
         function cclog(message, col = "w", bold = false) {
             const cols = { r: 1, g: 2, b: 4, w: 7, c: 6, m: 5, y: 3, k: 0 };
